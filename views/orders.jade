@@ -2,12 +2,14 @@ extends layout
 
 block content
   .container
+  h2 #{clients.cfirstname} #{clients.csurname}
   table(class='table table-bordered table-hover table-striped')
     thead
       tr(class='table-primary') 
         th Name 
         th Sky Card 
         th Addr
+        th Action
     tbody
       for order in orders
         tr
@@ -17,3 +19,5 @@ block content
             hello #{order.oskycard}
           td 
             hello #{order.oskyaddr1}
+          td 
+            a(class='edit' href='edit-order/#{order.orderkey}' data-orderkey='#{order.orderkey}') Edit

@@ -11,7 +11,7 @@ const LocalStrategy = require('passport-local').Strategy;
 
 const routes = require('./routes/index');
 const users = require('./routes/users');
-const connection = require('./database/mysql-connect');
+const database = require('./database/mysql-connect');
 const bCrypt = require('bcrypt-nodejs');
 
 const app = express();
@@ -36,7 +36,8 @@ app.use(flash());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const orders = require('./routes/orders')(app);
+require('./routes/orders')(app);
+require('./routes/edit_order')(app);
 
 app.use('/', routes);
 
@@ -68,34 +69,37 @@ function(req, username, password, done) {
 
     // find a user whose email is the same as the forms email
     // we are checking to see if the user trying to login already exists
-    connection.query("select * from user where user_name = '"+username+"'",function(err,rows){
+    database.query("select * from user where user_name = '" + database.connection.escape( username ) + "'")
+    .then(function(rows){
         console.log(rows);
         console.log("above row object");
-        if (err)
-            return done(err);
          if (rows.length) {
             return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
         } else {
+          // if there is no user with that email
+          // create the user
 
-            // if there is no user with that email
-            // create the user
-            var newUserMysql = {};
-            
-            newUserMysql.user_name = username;
-            newUserMysql.password = createHash(password);
-        
-            var insertQuery = "INSERT INTO user ( user_name, password ) values ('" + username +"','"+ newUserMysql.password +"')";
-                console.log(insertQuery);
-            connection.query(insertQuery,function(err,rows){
-              if (err) {
-                console.log(err);
-                return done(null, false, req.flash('signupMessage', err))
-              }
-              newUserMysql.id = rows.insertId;              
-              return done(null, newUserMysql);
-            });	
+          let newUserMysql = {};            
+          newUserMysql.user_name = username;
+          newUserMysql.password = createHash(password);
+
+          const insertQuery = "INSERT INTO user ( user_name, password ) values ('" + database.connection.escape( username ) +"','"+ newUserMysql.password +"')";
+          console.log(insertQuery);
+          database.query(insertQuery)
+          .then(function(rows) {
+            console.log('the rows', rows);
+            newUserMysql.id = rows.insertId;              
+            return done(null, newUserMysql);
+          })
+          .catch(function (err) {
+            console.log(err);
+            return done(null, false, req.flash('error', err))
+          }) 
         }	
-    });
+    })
+    .catch(function (err) {
+      return done(err);
+    })
 }));
 
 const isValidPassword = function(userPassword, password, req){
@@ -106,29 +110,16 @@ const isValidPassword = function(userPassword, password, req){
     req.flash('error', 'Invalid Password');
     return;
   }
-  // return bCrypt.compareSync(password, userPassword);
-  
-  // return bCrypt.compareSync(password, userPassword, function(err, res) {
-  //   if (err) {
-  //     req.flash('message', 'Invalid Password');
-  //   } else {
-  //     return res
-  //   }
-  // });
 }
 passport.use('login', new LocalStrategy({
   passReqToCallback : true
 },
 function(req, username, password, done) { 
 
-  connection.query("select * from user where user_name = '"+username+"'",function(err,rows){
-    console.log(rows);
-    console.log("above row object");
-
-    if (err) {
-      console.log('We have an error on login ', err);
-      return done(err);
-    } else {
+  database.query("select * from user where user_name = " + database.connection.escape( username ))
+    .then(function(rows) {
+      console.log(rows);
+      console.log("above row object");
 
       if (!rows.length) {
         return done(null, false, req.flash('error', 'That user name does not exist.'));
@@ -144,34 +135,11 @@ function(req, username, password, done) {
         // done method which will be treated like success
         return done(null, rows[0]);
       }	
-    }
-
-  });
-
-
-  // check in mongo if a user with username exists or not
-  // User.findOne({ 'username' :  username }, 
-  //   function(err, user) {
-  //     // In case of any error, return using the done method
-  //     if (err)
-  //       return done(err);
-  //     // Username does not exist, log error & redirect back
-  //     if (!user){
-  //       console.log('User Not Found with username '+username);
-  //       return done(null, false, 
-  //             req.flash('message', 'User Not found.'));                 
-  //     }
-  //     // User exists but wrong password, log the error 
-  //     if (!isValidPassword(user, password)){
-  //       console.log('Invalid Password');
-  //       return done(null, false, 
-  //           req.flash('message', 'Invalid Password'));
-  //     }
-  //     // User and password both match, return user from 
-  //     // done method which will be treated like success
-  //     return done(null, user);
-  //   }
-  // );
+    })
+    .catch(function (err) {
+      console.log('We have an error on login ', err);
+      return done(err);
+    });
 }));
 
 
@@ -181,7 +149,7 @@ passport.serializeUser(function(user, done) {
   });
 // passport.deserializeUser(Account.deserializeUser());
 passport.deserializeUser(function(id, done) {
-    connection.query("select * from user where id = "+id,function(err,rows){	
+    database.query("select * from user where id = "+id,function(err,rows){	
         done(err, rows[0]);
     });
 });

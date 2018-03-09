@@ -6,3 +6,14 @@ body {
 a {
   color: #00B7FF;
 }
+
+.error-msg {
+  color: red;
+}
+
+.success-msg {
+  color: green;
+}
+.cancel {
+  margin-right: 20px;
+}

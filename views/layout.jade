@@ -6,6 +6,27 @@ html
     link(href='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css', rel='stylesheet', media='screen')
     link(rel='stylesheet', href='/stylesheets/style.css')
   body
+
+    nav.navbar.navbar-expand-lg.navbar-dark.bg-primary
+      a.navbar-brand(href="/") The DATABASE
+      button.navbar-toggler(href="#" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation")
+        span.navbar-toggler-icon
+
+      div.collapse.navbar-collapse(id="navbarSupportedContent")    
+        ul.navbar-nav.mr-auto
+          li.nav-item.active
+            a.nav-link(href="#") Home
+          li.nav-item
+            a.nav-link(href="/orders") View Orders
+          li.nav-item
+            a.nav-link(href="/add-order") Add Order
+          li.nav-item
+            a.nav-link(href="/logout") Logout
+          
+          form.form-inline
+            input.form-control.mr-sm-2(type="search" placeholder="Search" aria-label="Search")
+            button.btn.btn-outline-success.my-2.my-sm-0(type="submit") Search
+
     if (error && error.length > 0)
       br
       h4.error-msg= error

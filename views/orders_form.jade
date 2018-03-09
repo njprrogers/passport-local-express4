@@ -1,0 +1,29 @@
+extends layout
+
+block content
+  .container
+    if (order)
+      h2 Edit Order
+    else        
+      h2 Add Order
+
+    form(role='form', action="/edit-order",method="post", style='max-width: 300px;', data-id='#{order && order.orderkey || ""}')
+      .form-group
+          input.form-control(type='text', name="oskyname", placeholder='Name' value='#{order && order.oskyname || ""}')
+          input.form-control(type='text', name="oskycard", placeholder='Sky Card' value='#{order && order.oskycard || ""}')
+          input.form-control(type='text', name="oskyaddr1", placeholder='Sky Address 1' value='#{order && order.oskyaddr1 || ""}')
+          input.form-control(type='text', name="oskyaddr2", placeholder='Sky Address 2' value='#{order && order.oskyaddr2 || ""}')
+      .form-group
+          if (error && error.length > 0)
+          br
+          p.error-msg= error
+          p.success-msg= error
+          br
+
+        a(href='/')
+          button.btn.cancel.btn-secondary(type="button") Cancel
+        button.btn.btn-primary.edit-order(type='submit') Submit
+        &nbsp;
+
+  script(src='/javascript/scripts.js')
+        
